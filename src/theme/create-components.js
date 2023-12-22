@@ -129,7 +129,7 @@ export function createComponents(config) {
       styleOverrides: {
         input: {
           '&::placeholder': {
-            opacity: 1
+            opacity: 1,            
           }
         }
       }
@@ -146,62 +146,19 @@ export function createComponents(config) {
         }
       }
     },
-    MuiFilledInput: {
-      styleOverrides: {
-        root: {
-          backgroundColor: 'transparent',
-          borderRadius: 8,
-          borderStyle: 'solid',
-          borderWidth: 1,
-          overflow: 'hidden',
-          borderColor: palette.neutral[200],
-          transition: muiTheme.transitions.create([
-            'border-color',
-            'box-shadow'
-          ]),
-          '&:hover': {
-            backgroundColor: palette.action.hover
-          },
-          '&:before': {
-            display: 'none'
-          },
-          '&:after': {
-            display: 'none'
-          },
-          [`&.${filledInputClasses.disabled}`]: {
-            backgroundColor: 'transparent'
-          },
-          [`&.${filledInputClasses.focused}`]: {
-            backgroundColor: 'transparent',
-            borderColor: palette.primary.main,
-            boxShadow: `${palette.primary.main} 0 0 0 2px`
-          },
-          [`&.${filledInputClasses.error}`]: {
-            borderColor: palette.error.main,
-            boxShadow: `${palette.error.main} 0 0 0 2px`
-          }
-        },
-        input: {
-          fontSize: 14,
-          fontWeight: 500,
-          lineHeight: '24px'
-        }
-      }
-    },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
           '&:hover': {
-            backgroundColor: palette.action.hover,
+            backgroundColor: '#EADDD2',
             [`& .${outlinedInputClasses.notchedOutline}`]: {
-              borderColor: palette.neutral[200]
+              borderColor: '#C09B73'
             }
           },
           [`&.${outlinedInputClasses.focused}`]: {
-            backgroundColor: 'transparent',
+            backgroundColor: '#EADDD2',
             [`& .${outlinedInputClasses.notchedOutline}`]: {
-              borderColor: palette.primary.main,
-              boxShadow: `${palette.primary.main} 0 0 0 2px`
+              border: '4px solid #5E4B37'
             }
           },
           [`&.${filledInputClasses.error}`]: {
@@ -212,15 +169,16 @@ export function createComponents(config) {
           }
         },
         input: {
-          fontSize: 14,
-          fontWeight: 500,
           lineHeight: '24px',
+          color: '#544238',
+          fontFamily: 'IBM Plex Mono',
+          fontSize: '14px',
         },
         notchedOutline: {
-          borderColor: palette.neutral[200],
+          border: '4px solid #C09B73',
           transition: muiTheme.transitions.create([
             'border-color',
-            'box-shadow'
+            'box-shadow',
           ])
         }
       }
@@ -294,8 +252,13 @@ export function createComponents(config) {
     },
     MuiTextField: {
       defaultProps: {
-        variant: 'filled'
-      }
-    }
+        variant: 'outlined',
+      },
+      styleOverrides: {
+        root: {
+          backgroundColor: '#EADDD2', 
+        },
+      },
+    },
   };
 }

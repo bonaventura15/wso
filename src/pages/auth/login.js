@@ -18,23 +18,32 @@ import {
 } from '@mui/material';
 import { useAuth } from 'src/hooks/use-auth';
 import { Layout as AuthLayout } from 'src/layouts/auth/layout';
+import { InputAdornment } from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import IconButton from '@mui/material/IconButton';
+import { TopNav } from 'src/layouts/dashboard/top-nav';
 
 const Page = () => {
   const router = useRouter();
   const auth = useAuth();
   const [method, setMethod] = useState('email');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [errorMessage, setErrorMessage] = useState(null);
+
   const formik = useFormik({
     initialValues: {
-      email: 'demo@devias.io',
-      password: 'Password123!',
+      emailORname: '',
+      password: '',
       submit: null
     },
     validationSchema: Yup.object({
-      email: Yup
+      emailORname: Yup
         .string()
         .email('Must be a valid email')
         .max(255)
-        .required('Email is required'),
+        .required('Email or name is required'),
       password: Yup
         .string()
         .max(255)
@@ -42,53 +51,54 @@ const Page = () => {
     }),
     onSubmit: async (values, helpers) => {
       try {
-        await auth.signIn(values.email, values.password);
+        await auth.signIn(values.emailORname, values.password);
         router.push('/');
       } catch (err) {
+        const customErrorMessage = err.message;
+        setErrorMessage(customErrorMessage);
         helpers.setStatus({ success: false });
-        helpers.setErrors({ submit: err.message });
+        helpers.setErrors({ submit: customErrorMessage });
         helpers.setSubmitting(false);
       }
     }
   });
 
-  const handleMethodChange = useCallback(
-    (event, value) => {
-      setMethod(value);
-    },
-    []
-  );
-
-  const handleSkip = useCallback(
-    () => {
-      auth.skip();
-      router.push('/');
-    },
-    [auth, router]
-  );
-
   return (
     <>
       <Head>
         <title>
-          Login | Devias Kit
+          Login | WAIFU-SET-ON
         </title>
       </Head>
       <Box
         sx={{
-          backgroundColor: 'background.paper',
-          flex: '1 1 auto',
-          alignItems: 'center',
+          backgroundImage: `url("/bgpage.png")`,
+          backgroundColor: '#E5E0D9',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: '970px',
+          alignItems: 'right',
           display: 'flex',
-          justifyContent: 'center'
+          justifyContent: 'right',
         }}
       >
+        <div
+          style={{
+            position: 'absolute',
+            right: '0',
+            width: '80px',
+            height: '80px',
+            marginTop: '10px'
+          }}
+        >
+          <TopNav />
+        </div>
         <Box
           sx={{
+            marginTop: '5%',
             maxWidth: 550,
             px: 3,
-            py: '100px',
-            width: '100%'
+            width: '100%',
+            py: '30px',
           }}
         >
           <div>
@@ -96,39 +106,17 @@ const Page = () => {
               spacing={1}
               sx={{ mb: 3 }}
             >
-              <Typography variant="h4">
-                Login
-              </Typography>
               <Typography
-                color="text.secondary"
-                variant="body2"
+                sx={{
+                  color: '#D89F51',
+                  fontFamily: 'Akaya Telivigala',
+                  fontSize: '96px',
+                  fontWeight: 400,
+                }}
               >
-                Don&apos;t have an account?
-                &nbsp;
-                <Link
-                  component={NextLink}
-                  href="/auth/register"
-                  underline="hover"
-                  variant="subtitle2"
-                >
-                  Register
-                </Link>
+                Login-WSO
               </Typography>
             </Stack>
-            <Tabs
-              onChange={handleMethodChange}
-              sx={{ mb: 3 }}
-              value={method}
-            >
-              <Tab
-                label="Email"
-                value="email"
-              />
-              <Tab
-                label="Phone Number"
-                value="phoneNumber"
-              />
-            </Tabs>
             {method === 'email' && (
               <form
                 noValidate
@@ -136,81 +124,146 @@ const Page = () => {
               >
                 <Stack spacing={3}>
                   <TextField
-                    error={!!(formik.touched.email && formik.errors.email)}
                     fullWidth
-                    helperText={formik.touched.email && formik.errors.email}
-                    label="Email Address"
-                    name="email"
+                    label="Email Address or Name"
+                    name="emailORname"
                     onBlur={formik.handleBlur}
                     onChange={formik.handleChange}
-                    type="email"
-                    value={formik.values.email}
+                    type="text"
+                    value={formik.values.emailORname}
+                    InputLabelProps={{
+                      style: {
+                        color: '#544238',
+                        fontSize: '14px',
+                      },
+                    }}
                   />
                   <TextField
-                    error={!!(formik.touched.password && formik.errors.password)}
                     fullWidth
-                    helperText={formik.touched.password && formik.errors.password}
                     label="Password"
                     name="password"
                     onBlur={formik.handleBlur}
                     onChange={formik.handleChange}
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={formik.values.password}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            edge="end"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    InputLabelProps={{
+                      style: {
+                        color: '#544238',
+                        fontSize: '14px',
+                      },
+                    }}
                   />
                 </Stack>
-                <FormHelperText sx={{ mt: 1 }}>
-                  Optionally you can skip.
-                </FormHelperText>
-                {formik.errors.submit && (
-                  <Typography
-                    color="error"
-                    sx={{ mt: 3 }}
-                    variant="body2"
-                  >
-                    {formik.errors.submit}
-                  </Typography>
-                )}
+                <Box
+                  position="absolute"
+                  top="2%"
+                  left="35%"
+                  transform="translate(-50%, -50%)"
+                  zIndex={999}
+                  width="30%"
+                >
+                  {errorMessage && (
+                    <Alert severity="error" onClose={() => setErrorMessage(null)}>
+                      {errorMessage}
+                    </Alert>
+                  )}
+                </Box>
                 <Button
                   fullWidth
                   size="large"
                   sx={{ mt: 3 }}
                   type="submit"
-                  variant="contained"
+                  style={{
+                    backgroundColor: '#EADDD2', border: '4px solid #C09B73', borderRadius: '8px', color: '#544238', fontFamily: 'IBM Plex Mono, monospace', fontSize: '28px'
+                  }}
                 >
-                  Continue
+                  LOGIN
                 </Button>
-                <Button
-                  fullWidth
-                  size="large"
-                  sx={{ mt: 3 }}
-                  onClick={handleSkip}
-                >
-                  Skip authentication
-                </Button>
-                <Alert
-                  color="primary"
-                  severity="info"
-                  sx={{ mt: 3 }}
-                >
-                  <div>
-                    You can use <b>demo@devias.io</b> and password <b>Password123!</b>
-                  </div>
-                </Alert>
               </form>
             )}
-            {method === 'phoneNumber' && (
-              <div>
-                <Typography
-                  sx={{ mb: 1 }}
-                  variant="h6"
-                >
-                  Not available in the demo
-                </Typography>
-                <Typography color="text.secondary">
-                  To prevent unnecessary costs we disabled this feature in the demo.
-                </Typography>
-              </div>
-            )}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
+            <Typography
+              color="text.secondary"
+              variant="body2"
+            >
+              <Link
+                component={NextLink}
+                href="/auth/register"
+                underline="hover"
+                variant="subtitle2"
+                sx={{
+                  color: '#C09B73',
+                  fontFamily: 'IBM Plex Mono',
+                  fontSize: '24px',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                }}
+              >
+                Forget password?
+              </Link>
+            </Typography>
+            <Typography
+              color="text.secondyar"
+              variant="body2"
+            >
+              <Link
+                component={NextLink}
+                href="/auth/register"
+                underline="hover"
+                variant="subtitle2"
+                sx={{
+                  color: '#C09B73',
+                  fontFamily: 'IBM Plex Mono',
+                  fontSize: '24px',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                }}                      >
+                Register now!
+              </Link>
+            </Typography>
+          </div>
+          <Stack
+            spacing={1}
+            sx={{ mt: 3 }}
+
+          >
+            <Typography
+              sx={{
+                textAlign: 'center',
+                color: '#C09B73',
+                fontFamily: 'IBM Plex Mono',
+                fontSize: '22px',
+                fontStyle: 'normal',
+                fontWeight: 400,
+              }}
+            >
+              More Register Methods
+            </Typography>
+          </Stack>
+          <div style={{ textAlign: 'center', marginTop: '5px' }}>
+            <Button
+              component={NextLink}
+              href="https://3c71-103-105-55-169.ngrok-free.app/google-auth/login"
+              style={{
+                background: 'url("/google.png"), lightgray 50% / cover no-repeat',
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%'
+              }}>
+            </Button>
           </div>
         </Box>
       </Box>
@@ -223,5 +276,6 @@ Page.getLayout = (page) => (
     {page}
   </AuthLayout>
 );
+
 
 export default Page;

@@ -11,9 +11,6 @@ const LayoutRoot = styled('div')(({ theme }) => ({
   display: 'flex',
   flex: '1 1 auto',
   maxWidth: '100%',
-  [theme.breakpoints.up('lg')]: {
-    paddingLeft: SIDE_NAV_WIDTH
-  }
 }));
 
 const LayoutContainer = styled('div')({
@@ -47,11 +44,6 @@ export const Layout = withAuthGuard((props) => {
 
   return (
     <>
-      <TopNav onNavOpen={() => setOpenNav(true)} />
-      <SideNav
-        onClose={() => setOpenNav(false)}
-        open={openNav}
-      />
       <LayoutRoot>
         <LayoutContainer>
           {children}

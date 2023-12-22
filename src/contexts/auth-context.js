@@ -4,7 +4,9 @@ import PropTypes from 'prop-types';
 const HANDLERS = {
   INITIALIZE: 'INITIALIZE',
   SIGN_IN: 'SIGN_IN',
-  SIGN_OUT: 'SIGN_OUT'
+  SIGN_UP: 'SIGN_UP',
+  SIGN_OUT: 'SIGN_OUT',
+  DELETE_ACCOUNT: 'DELETE_ACCOUNT',
 };
 
 const initialState = {
@@ -20,12 +22,10 @@ const handlers = {
     return {
       ...state,
       ...(
-        // if payload (user) is provided, then is authenticated
         user
           ? ({
             isAuthenticated: true,
             isLoading: false,
-            user
           })
           : ({
             isLoading: false
@@ -34,12 +34,15 @@ const handlers = {
     };
   },
   [HANDLERS.SIGN_IN]: (state, action) => {
-    const user = action.payload;
-
     return {
       ...state,
       isAuthenticated: true,
-      user
+    };
+  },
+  [HANDLERS.SIGN_UP]: (state, action) => {
+    return {
+      ...state,
+      isAuthenticated: true,
     };
   },
   [HANDLERS.SIGN_OUT]: (state) => {
@@ -48,14 +51,19 @@ const handlers = {
       isAuthenticated: false,
       user: null
     };
-  }
+  },
+  [HANDLERS.DELETE_ACCOUNT]: (state) => {
+    return {
+      ...state,
+      isAuthenticated: false,
+      user: null,
+    };
+  },
 };
 
 const reducer = (state, action) => (
   handlers[action.type] ? handlers[action.type](state, action) : state
 );
-
-// The role of this context is to propagate authentication state through the App tree.
 
 export const AuthContext = createContext({ undefined });
 
@@ -63,9 +71,25 @@ export const AuthProvider = (props) => {
   const { children } = props;
   const [state, dispatch] = useReducer(reducer, initialState);
   const initialized = useRef(false);
+  const api = 'https://18d9-103-105-55-169.ngrok-free.app/api/'
+
+  const characterEndpoints = {
+    "Meimei Himari": "pesan-meimei-himari",
+    "NURSE-T": "pesan-nurseT",
+    "Kusukabe Tsumugi": "pesan-kusukabe-tsumugi",
+    "NO.7": "pesan-no7",
+    "SAYO": "pesan-sayo",
+  };
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      return parts.pop().split(';').shift();
+    }
+  }
 
   const initialize = async () => {
-    // Prevent from calling twice in development mode with React.StrictMode enabled
     if (initialized.current) {
       return;
     }
@@ -81,16 +105,8 @@ export const AuthProvider = (props) => {
     }
 
     if (isAuthenticated) {
-      const user = {
-        id: '5e86809283e28b96d2d38537',
-        avatar: '/assets/avatars/avatar-anika-visser.png',
-        name: 'Anika Visser',
-        email: 'anika.visser@devias.io'
-      };
-
       dispatch({
-        type: HANDLERS.INITIALIZE,
-        payload: user
+        type: HANDLERS.INITIALIZE
       });
     } else {
       dispatch({
@@ -99,11 +115,11 @@ export const AuthProvider = (props) => {
     }
   };
 
+
   useEffect(
     () => {
       initialize();
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -127,33 +143,382 @@ export const AuthProvider = (props) => {
     });
   };
 
-  const signIn = async (email, password) => {
-    if (email !== 'demo@devias.io' || password !== 'Password123!') {
-      throw new Error('Please check your email and password');
-    }
-
+  const signIn = async (emailORname, password) => {
     try {
-      window.sessionStorage.setItem('authenticated', 'true');
+      const response = await fetch(`${api}auth/wso/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          emailORname: emailORname,
+          password: password,
+        }),
+      });
+
+      if (response.status === 200) {
+        const userData = await response.json();
+        let access_token = userData.access_token;
+
+        function setCookie(name, value, days) {
+          let expires = "";
+          if (days) {
+            const date = new Date();
+            date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+            expires = `; expires=${date.toUTCString()}`;
+          }
+          document.cookie = `${name}=${value}${expires}; path=/`;
+        }
+        setCookie("access_token", access_token, 30);
+        dispatch({
+          type: HANDLERS.SIGN_IN
+        });
+      } else if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+        throw new Error('Validation Error');
+      } else {
+        console.error('Unexpected response status:', response.status);
+        throw new Error('Unexpected response status');
+      }
+    } catch (err) {
+      throw new Error('nama, email atau password yang anda masukan salah');
+    }
+  };
+
+  const getToken = async (email) => {
+    try {
+      const tokenResponse = await fetch(`${api}auth/wso/register/${email}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (tokenResponse.status === 200) {
+        console.log('Token request successful');
+        alert('Token Telah Terkirim Silahkan Cek Email Anda');
+        return true; 
+      } else if (tokenResponse.status === 422) {
+        const errorData = await tokenResponse.json();
+        console.error('Validation Error:', errorData);
+      } else {
+        console.error('Unexpected response status:', tokenResponse.status);
+      }
     } catch (err) {
       console.error(err);
     }
+    return false; 
+  };
+  
+  const signUp = async (email, token, password, confirmPassword) => {
+    try {
+      const requestBody = JSON.stringify({
+        email,
+        password,
+        konfirmasi_password: confirmPassword,
+        token,
+      });
+  
+      const response = await fetch(`${api}auth/wso/simpan-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: requestBody,
+      });
+  
+      if (response.ok) {
+        const userData = await response.json();
+        let access_token = userData.access_token;
 
-    const user = {
-      id: '5e86809283e28b96d2d38537',
-      avatar: '/assets/avatars/avatar-anika-visser.png',
-      name: 'Anika Visser',
-      email: 'anika.visser@devias.io'
-    };
+        function setCookie(name, value, days) {
+          let expires = '';
+          if (days) {
+            const date = new Date();
+            date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+            expires = `; expires=${date.toUTCString()}`;
+          }
+          document.cookie = `${name}=${value}${expires}; path=/`;
+        }
 
-    dispatch({
-      type: HANDLERS.SIGN_IN,
-      payload: user
+        setCookie('access_token', access_token, 30);
+        console.log('Registration successful:', userData);
+      } else {
+        const errorData = await response.json();
+        console.error('Request failed with status:', response.status);
+        console.error('Error Details:', errorData);
+      }
+    } catch (err) {
+      console.error('An unexpected error occurred:', err);
+    }
+  };
+  
+  const updateuser = async (nama, gender, ulang_tahun) => {
+    try {
+      const accessToken = getCookie('access_token');
+  
+      if (!accessToken) {
+        console.error('Access token not found in cookies');
+        return;
+      }
+  
+      const response = await fetch(`${api}user-root/update-data`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'access-token': accessToken,
+        },
+        body: JSON.stringify({
+          nama,
+          gender,
+          ulang_tahun,
+        }),
+      });
+  
+      if (response.ok) {
+        const responseData = await response.json();
+        dispatch({
+          type: HANDLERS.SIGN_UP
+        });
+        console.log('User data updated successfully:', responseData);
+      } else {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+      }
+    } catch (error) {
+      console.error('Error updating user data:', error.message);
+    }
+  };
+  
+const userinformation = async () => {
+  try {
+    const accessToken = getCookie('access_token');
+
+    if (!accessToken) {
+      console.error('Access token not found in cookies');
+      return null;
+    }
+
+    const response = await fetch(`${api}user-root/get-data`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'access-token': accessToken,
+      },
     });
+
+    console.log('Raw API response:', response);
+
+    if (response.ok) {
+      const userData = await response.json();
+      console.log('User data retrieved successfully:', userData);
+      return userData;
+    } else {
+      const errorData = await response.json();
+      console.error('Error in API response:', errorData);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error retrieving user data:', error.message);
+    return null;
+  }
+};
+
+
+  const deleteaccount = async () => {
+    try {
+      const accessToken = getCookie('access_token');
+  
+      if (!accessToken) {
+        console.error('Access token not found in cookies');
+        return;
+      }
+  
+      const response = await fetch(`${api}user-root/delete-account`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'access-token': accessToken,
+        },
+      });
+  
+      if (response.ok) {
+        dispatch({
+          type: HANDLERS.DELETE_ACCOUNT,
+        });
+        console.log('Account deleted successfully');
+      } else if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+      } else {
+        console.error('Unexpected response status:', response.status);
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error.message);
+    }
+  };  
+
+  const asistenwaifu = async (selectedCharacter, userInput) => {
+    try {
+      const endpoint = characterEndpoints[selectedCharacter];
+      const apiUrl = `${api}aiu/${endpoint}?pesan=${encodeURIComponent(userInput)}`;
+      const access_token = getCookie("access_token");
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access-token': access_token,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { data, error: null };
+      } else {
+        console.error('Error occurred while fetching data.');
+        return { data: null, error: 'Error occurred while fetching data.' };
+      }
+    } catch (error) {
+      console.error('There has been a problem with your fetch operation:', error);
+      return { data: null, error: 'Error occurred while fetching data.' };
+    }
+  };
+  
+  const becomewaifu = async (selectedSpeakerId, formData) => {
+    try {
+      const selectedLanguage = getCookie("selectedLanguage");
+      const accessToken = getCookie('access_token');
+      
+      const response = await fetch(`${api}bw/change-voice/${selectedSpeakerId}?bahasa=${selectedLanguage}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'access-token': accessToken,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { data };
+      } else {
+        const errorData = await response.json();
+        console.error('Error:', response.statusText, errorData);
+        return { error: 'An error occurred while making the request.' };
+      }
+    } catch (error) {
+      console.error('An error occurred while making the request:', error);
+      return { error: 'An error occurred while making the request.' };
+    }
   };
 
-  const signUp = async (email, name, password) => {
-    throw new Error('Sign up is not implemented');
+  const getaudiolog = async () => {
+    try {
+      const accessToken = getCookie('access_token');
+  
+      if (!accessToken) {
+        console.error('Access token not found in cookies');
+        return;
+      }
+  
+      console.log('Access Token:', accessToken);
+  
+      const response = await fetch(`${api}bw/get-all-audio-log`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access-token': accessToken,
+        },
+      });
+  
+      console.log('Response:', response);
+  
+      if (response.ok) {
+        const logData = await response.json();
+        console.log('Audio log data retrieved successfully:', logData);
+  
+        if (Array.isArray(logData)) {
+          return logData;
+        } else {
+          console.error('Unexpected response structure:', logData);
+          return [];
+        }
+      } else if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+        return [];
+      } else {
+        console.error('Unexpected response status:', response.status);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error retrieving audio log data:', error.message);
+      return [];
+    }
   };
+  
+  const deleteauidolog = async (audioId) => {
+    try {
+      const accessToken = getCookie('access_token');
+  
+      if (!accessToken) {
+        console.error('Access token not found in cookies');
+        return;
+      }
+  
+      const response = await fetch(`${api}bw/delete-audio-log/${audioId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'access-token': accessToken,
+        },
+      });
+  
+      if (response.ok) {
+        console.log('Audio log deleted successfully');
+      } else if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+      } else {
+        console.error('Unexpected response status:', response.status);
+      }
+    } catch (error) {
+      console.error('Error deleting audio log:', error.message);
+    }
+  };
+
+  const savetodrive = async (audioId) => {
+    try {
+      const accessToken = getCookie('access_token');
+  
+      if (!accessToken) {
+        console.error('Access token not found in cookies');
+        return;
+      }
+  
+      const response = await fetch(`${api}bw/save-to-drive-only?audio_id=${audioId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'access-token': accessToken,
+        },
+      });
+  
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('Save to drive successful:', responseData);
+      } else if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+      } else {
+        console.error('Unexpected response status:', response.status);
+      }
+    } catch (error) {
+      console.error('Error saving to drive:', error.message);
+    }
+  };
+
 
   const signOut = () => {
     dispatch({
@@ -168,7 +533,16 @@ export const AuthProvider = (props) => {
         skip,
         signIn,
         signUp,
-        signOut
+        signOut,
+        getToken,
+        updateuser,
+        deleteaccount,
+        asistenwaifu,
+        becomewaifu,
+        getaudiolog,
+        deleteauidolog,
+        savetodrive,
+        userinformation
       }}
     >
       {children}

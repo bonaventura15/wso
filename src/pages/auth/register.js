@@ -6,148 +6,286 @@ import * as Yup from 'yup';
 import { Box, Button, Link, Stack, TextField, Typography } from '@mui/material';
 import { useAuth } from 'src/hooks/use-auth';
 import { Layout as AuthLayout } from 'src/layouts/auth/layout';
+import Grid from '@mui/material/Grid';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import { useState } from 'react';
+import { TopNav } from 'src/layouts/dashboard/top-nav';
 
 const Page = () => {
   const router = useRouter();
   const auth = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword1, setShowPassword1] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
+
   const formik = useFormik({
     initialValues: {
       email: '',
-      name: '',
+      token: '',
       password: '',
-      submit: null
+      konfirmasi_password: '',
     },
     validationSchema: Yup.object({
-      email: Yup
-        .string()
+      email: Yup.string()
         .email('Must be a valid email')
         .max(255)
         .required('Email is required'),
-      name: Yup
-        .string()
+      token: Yup.string()
         .max(255)
-        .required('Name is required'),
-      password: Yup
-        .string()
+        .required('Token is required'),
+      password: Yup.string()
         .max(255)
-        .required('Password is required')
+        .required('Password is required'),
+      konfirmasi_password: Yup.string()
+        .max(255)
+        .required('Confirmation password is required')
+        .oneOf([Yup.ref('password'), null], 'Passwords must match'),
     }),
     onSubmit: async (values, helpers) => {
+      const { email, token, password, konfirmasi_password } = values;
       try {
-        await auth.signUp(values.email, values.name, values.password);
-        router.push('/');
+        await auth.signUp(email, token, password, konfirmasi_password);
+        router.push('/auth/update-user');
       } catch (err) {
         helpers.setStatus({ success: false });
         helpers.setErrors({ submit: err.message });
         helpers.setSubmitting(false);
       }
-    }
+    },
+
   });
+
+
+  const getToken = async (email) => {
+    try {
+      const token = await auth.getToken(email);
+      formik.setFieldValue('token', token);
+    } catch (err) {
+      console.error(err);
+      setError(err);
+    }
+  };
+
+  const gridButton = {
+    width: '70px',
+    height: '55px',
+    fontSize: '22px',
+    color: '#544238',
+    fontFamily: 'IBM Plex Mono',
+    borderTop: '4px solid #C09B73',
+    borderRight: '4px solid #C09B73',
+    borderBottom: '4px solid #C09B73',
+    borderTopLeftRadius: 0,
+    borderBottomLeftRadius: 0,
+  };
+
+
+
+
 
   return (
     <>
       <Head>
-        <title>
-          Register | Devias Kit
-        </title>
+        <title>Register | WAIFU-SET-ON </title>
       </Head>
       <Box
         sx={{
-          flex: '1 1 auto',
-          alignItems: 'center',
+          backgroundImage: `url("/bgpage.png")`,
+          backgroundColor: '#E5E0D9',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: '970px',
+          alignItems: 'right',
           display: 'flex',
-          justifyContent: 'center'
+          justifyContent: 'right',
         }}
       >
+        <div
+          style={{
+            position: 'absolute',
+            right: '0',
+            width: '80px',
+            height: '80px',
+            marginTop: '10px'
+          }}
+        >
+          <TopNav />
+        </div>
         <Box
           sx={{
             maxWidth: 550,
             px: 3,
-            py: '100px',
-            width: '100%'
+            py: '45px',
+            width: '100%',
           }}
         >
           <div>
-            <Stack
-              spacing={1}
-              sx={{ mb: 3 }}
+            <Typography
+              sx={{
+                color: '#D89F51',
+                fontFamily: 'Akaya Telivigala',
+                fontSize: '86px',
+                fontStyle: 'normal',
+                fontWeight: 400,
+              }}
             >
-              <Typography variant="h4">
-                Register
-              </Typography>
-              <Typography
-                color="text.secondary"
-                variant="body2"
-              >
-                Already have an account?
-                &nbsp;
-                <Link
-                  component={NextLink}
-                  href="/auth/login"
-                  underline="hover"
-                  variant="subtitle2"
-                >
-                  Log in
-                </Link>
-              </Typography>
-            </Stack>
-            <form
-              noValidate
-              onSubmit={formik.handleSubmit}
-            >
+              Register-WSO
+            </Typography>
+          </div>
+          <div>
+            <form noValidate onSubmit={formik.handleSubmit}>
               <Stack spacing={3}>
                 <TextField
-                  error={!!(formik.touched.name && formik.errors.name)}
                   fullWidth
-                  helperText={formik.touched.name && formik.errors.name}
-                  label="Name"
-                  name="name"
-                  onBlur={formik.handleBlur}
-                  onChange={formik.handleChange}
-                  value={formik.values.name}
-                />
-                <TextField
-                  error={!!(formik.touched.email && formik.errors.email)}
-                  fullWidth
-                  helperText={formik.touched.email && formik.errors.email}
-                  label="Email Address"
+                  label="Email"
                   name="email"
                   onBlur={formik.handleBlur}
                   onChange={formik.handleChange}
-                  type="email"
                   value={formik.values.email}
+                  InputLabelProps={{
+                    style: {
+                      color: '#544238',
+                      fontSize: '14px',
+                    },
+                  }}
                 />
+                <Grid container spacing={0} alignItems="flex-end">
+                  <Grid item>
+                    <TextField
+                      fullWidth
+                      label="Konfirmasi Token"
+                      name="token"
+                      onBlur={formik.handleBlur}
+                      onChange={formik.handleChange}
+                      type="text"
+                      value={formik.values.token}
+                      InputLabelProps={{
+                        style: {
+                          color: '#544238',
+                          fontSize: '16px',
+                        },
+                      }}
+                      sx={{
+                        width: '430px',
+                        '& .MuiOutlinedInput-root': {
+                          borderTopRightRadius: 0,
+                          borderBottomRightRadius: 0,
+                        },
+                      }}
+                    /></Grid>
+                  <Grid item>
+                    <Button
+                      onClick={() => getToken(formik.values.email)}
+                      style={gridButton}
+                    >
+                      Send
+                    </Button>
+                  </Grid>
+                </Grid>
                 <TextField
-                  error={!!(formik.touched.password && formik.errors.password)}
                   fullWidth
-                  helperText={formik.touched.password && formik.errors.password}
                   label="Password"
                   name="password"
                   onBlur={formik.handleBlur}
                   onChange={formik.handleChange}
-                  type="password"
+                  type={showPassword1 ? 'text' : 'password'}
                   value={formik.values.password}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword1(!showPassword1)}
+                          onMouseDown={(e) => e.preventDefault()}
+                        >
+                          {showPassword1 ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  InputLabelProps={{
+                    style: {
+                      color: '#544238',
+                      fontSize: '14px',
+                    },
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Confirm Password"
+                  name="konfirmasi_password"
+                  onBlur={formik.handleBlur}
+                  onChange={formik.handleChange}
+                  type={showPassword2 ? 'text' : 'password'}
+                  value={formik.values.konfirmasi_password}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword2(!showPassword2)}
+                          onMouseDown={(e) => e.preventDefault()}
+                        >
+                          {showPassword2 ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  InputLabelProps={{
+                    style: {
+                      color: '#544238',
+                      fontSize: '14px',
+                    },
+                  }}
                 />
               </Stack>
               {formik.errors.submit && (
-                <Typography
-                  color="error"
-                  sx={{ mt: 3 }}
-                  variant="body2"
-                >
+                <Typography color="error" sx={{ mt: 3 }} variant="body2">
                   {formik.errors.submit}
                 </Typography>
               )}
               <Button
                 fullWidth
                 size="large"
-                sx={{ mt: 3 }}
+                sx={{
+                  mt: 3, backgroundColor: '#EADDD2', border: '4px solid #C09B73', borderRadius: '8px', color: '#544238', fontFamily: 'IBM Plex Mono', fontSize: '22px', textDecorationLine: 'underline'
+                }}
                 type="submit"
-                variant="contained"
               >
-                Continue
+                REGISTER
               </Button>
             </form>
+          </div>
+          <svg width="500" height="3" viewBox="0 0 500 3" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M-0.00390625 1.25146L500.002 1.25146" stroke="#D5C4BA" stroke-width="2" />
+          </svg>
+          <Stack
+            spacing={1}
+          >
+            <Typography
+              sx={{
+                textAlign: 'center',
+                color: '#C09B73',
+                fontFamily: 'IBM Plex Mono, monospace',
+                fontSize: '24px',
+                fontStyle: 'normal',
+                fontWeight: 400,
+              }}
+            >
+              More Register Methods
+            </Typography>
+          </Stack>
+          <div style={{ textAlign: 'center', marginTop: '5px' }}>
+            <Button
+              component={NextLink}
+              href="https://68e7-103-105-55-169.ngrok-free.app/google-auth/register"
+              style={{
+                background: 'url("/google.png"), lightgray 50% / cover no-repeat',
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%'
+              }}>
+            </Button>
           </div>
         </Box>
       </Box>
