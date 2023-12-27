@@ -76,6 +76,7 @@ const Page = () => {
                     alignItems: 'right',
                     display: 'flex',
                     justifyContent: 'right',
+                    height: '730px'
                 }}
             >
                 <div

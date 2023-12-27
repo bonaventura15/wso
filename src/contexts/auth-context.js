@@ -52,6 +52,14 @@ const handlers = {
       user: null
     };
   },
+  [HANDLERS.USER_INFORMATION]: (state, action) => {
+    const userData = action.payload;
+
+    return {
+      ...state,
+      user: userData,
+    };
+  },
   [HANDLERS.DELETE_ACCOUNT]: (state) => {
     return {
       ...state,
@@ -71,7 +79,7 @@ export const AuthProvider = (props) => {
   const { children } = props;
   const [state, dispatch] = useReducer(reducer, initialState);
   const initialized = useRef(false);
-  const api = 'https://18d9-103-105-55-169.ngrok-free.app/api/'
+  const api = 'http://waifu-set-on.wso:8000/api/'
 
   const characterEndpoints = {
     "Meimei Himari": "pesan-meimei-himari",
@@ -157,22 +165,8 @@ export const AuthProvider = (props) => {
       });
 
       if (response.status === 200) {
-        const userData = await response.json();
-        let access_token = userData.access_token;
-
-        function setCookie(name, value, days) {
-          let expires = "";
-          if (days) {
-            const date = new Date();
-            date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-            expires = `; expires=${date.toUTCString()}`;
-          }
-          document.cookie = `${name}=${value}${expires}; path=/`;
-        }
-        setCookie("access_token", access_token, 30);
-        dispatch({
-          type: HANDLERS.SIGN_IN
-        });
+        const rest = await response.json();
+        return rest.url;
       } else if (response.status === 422) {
         const errorData = await response.json();
         console.error('Validation Error:', errorData);
@@ -185,7 +179,9 @@ export const AuthProvider = (props) => {
       throw new Error('nama, email atau password yang anda masukan salah');
     }
   };
+  
 
+  
   const getToken = async (email) => {
     try {
       const tokenResponse = await fetch(`${api}auth/wso/register/${email}`, {
@@ -228,22 +224,9 @@ export const AuthProvider = (props) => {
         body: requestBody,
       });
   
-      if (response.ok) {
-        const userData = await response.json();
-        let access_token = userData.access_token;
-
-        function setCookie(name, value, days) {
-          let expires = '';
-          if (days) {
-            const date = new Date();
-            date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-            expires = `; expires=${date.toUTCString()}`;
-          }
-          document.cookie = `${name}=${value}${expires}; path=/`;
-        }
-
-        setCookie('access_token', access_token, 30);
-        console.log('Registration successful:', userData);
+      if (response.status === 201) {
+        const rest = await response.json();
+        return rest.url;
       } else {
         const errorData = await response.json();
         console.error('Request failed with status:', response.status);
@@ -291,40 +274,40 @@ export const AuthProvider = (props) => {
     }
   };
   
-const userinformation = async () => {
-  try {
-    const accessToken = getCookie('access_token');
+  const userinformation = async () => {
+    try {
+      const accessToken = getCookie('access_token');
 
-    if (!accessToken) {
-      console.error('Access token not found in cookies');
-      return null;
+      if (!accessToken) {
+        console.error('Access token not found in cookies');
+        return;
+      }
+
+      const response = await fetch(`${api}user-root/get-data`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access-token': accessToken,
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+      dispatch({
+        type: HANDLERS.USER_INFORMATION,
+        payload: userData,
+      });
+        console.log('User data retrieved successfully:', userData);
+      } else if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+      } else {
+        console.error('Unexpected response status:', response.status);
+      }
+    } catch (error) {
+      console.error('Error retrieving user data:', error.message);
     }
-
-    const response = await fetch(`${api}user-root/get-data`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'access-token': accessToken,
-      },
-    });
-
-    console.log('Raw API response:', response);
-
-    if (response.ok) {
-      const userData = await response.json();
-      console.log('User data retrieved successfully:', userData);
-      return userData;
-    } else {
-      const errorData = await response.json();
-      console.error('Error in API response:', errorData);
-      return null;
-    }
-  } catch (error) {
-    console.error('Error retrieving user data:', error.message);
-    return null;
-  }
-};
-
+  };
 
   const deleteaccount = async () => {
     try {
@@ -519,6 +502,153 @@ const userinformation = async () => {
     }
   };
 
+  const getaudiodata = async (audioId) => {
+    try {
+      const accessToken = getCookie('access_token');
+  
+      if (!accessToken) {
+        console.error('Access token not found in cookies');
+        return null;
+      }
+  
+      const response = await fetch(`${api}bw/get-audio-data?audio_id=${audioId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access-token': accessToken,
+        },
+      });
+  
+      if (response.ok) {
+        const audioData = await response.json();
+        console.log('Audio data retrieved successfully:', audioData);
+        return audioData;
+      } else if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+        return null;
+      } else {
+        console.error('Unexpected response status:', response.status);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error retrieving audio data:', error.message);
+      return null;
+    }
+  };
+
+  const sharetosmd = async (audioId, caption, accessToken) => {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/bw/share-to-smd', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'access-token': accessToken,
+        },
+        body: JSON.stringify({
+          audio_id: audioId,
+          caption: caption,
+        }),
+      });
+  
+      if (response.status === 200) {
+        const responseData = await response.json();
+        console.log('Share to SMD successful:', responseData);
+      } else if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+      } else {
+        console.error('Unexpected response status:', response.status);
+      }
+    } catch (error) {
+      console.error('An unexpected error occurred:', error);
+    }
+  };
+  
+  const forgotpassword = async (email) => {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/user-root/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+        }),
+      });
+  
+      if (response.status === 200) {
+        const result = await response.json();
+        console.log('Password reset email sent successfully:', result);
+      } else if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+      } else {
+        console.error('Unexpected response status:', response.status);
+      }
+    } catch (error) {
+      console.error('An unexpected error occurred:', error);
+    }
+  };
+
+  const changepassword = async (password, confirmPassword) => {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/user-root/change-password', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          password: password,
+          konfirmasi_password: confirmPassword,
+        }),
+      });
+  
+      if (response.status === 200) {
+        const result = await response.json();
+        console.log('Password changed successfully:', result);
+      } else if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+      } else {
+        console.error('Unexpected response status:', response.status);
+      }
+    } catch (error) {
+      console.error('An unexpected error occurred:', error);
+    }
+  };
+  
+  const obrolangpt = async (accessToken, karakter, input) => {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/aiu/obrolan-gpt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'access-token': accessToken,
+        },
+        body: JSON.stringify({
+          karakter,
+          input
+        }),
+      });
+  
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('Successful Response:', responseData);
+        return responseData;
+      } else if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation Error:', errorData);
+        throw new Error('Validation Error');
+      } else {
+        console.error('Unexpected response status:', response.status);
+        throw new Error('Unexpected response status');
+      }
+    } catch (error) {
+      console.error('An unexpected error occurred:', error);
+      throw new Error('An unexpected error occurred');
+    }
+  };
 
   const signOut = () => {
     dispatch({
@@ -536,13 +666,18 @@ const userinformation = async () => {
         signOut,
         getToken,
         updateuser,
+        userinformation,
         deleteaccount,
         asistenwaifu,
         becomewaifu,
         getaudiolog,
         deleteauidolog,
         savetodrive,
-        userinformation
+        getaudiodata,
+        forgotpassword,
+        changepassword,
+        sharetosmd,
+        obrolangpt
       }}
     >
       {children}

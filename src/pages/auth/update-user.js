@@ -54,7 +54,7 @@ const Page = () => {
                 alert('User data successfully updated');
                 const access_token = getCookie("access_token");
 
-                await auth.updateData(values.nama, values.gender, values.ulang_tahun);
+                await auth.updateuser(values.nama, values.gender, values.ulang_tahun);
                 router.push('/');
             } catch (err) {
                 console.error('Error updating user data:', err);
@@ -99,7 +99,7 @@ const Page = () => {
                 sx={{
                     maxWidth: 550,
                     px: 3,
-                    py: '110px',
+                    py: '117px',
                     width: '100%',
                 }}
             >

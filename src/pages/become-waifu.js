@@ -247,7 +247,7 @@ const Page = () => {
               <div style={{ position: 'relative' }}>
                 <Button
                   variant="contained"
-                  onClick={() => handleButtonClick(1, "Kusukabe Tsumugi", "kusukabe tsumugi")}
+                  onClick={() => handleButtonClick(1, "Kusukabe Tsumugi", 'kusukabe tsumugi')}
                   style={{
                     ...buttonStyle,
                     background: selectedButton === 1 ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.45)',
@@ -279,7 +279,7 @@ const Page = () => {
               <div style={{ position: 'relative' }}>
                 <Button
                   variant="contained"
-                  onClick={() => handleButtonClick(2, "Meimei Himari", 14)}
+                  onClick={() => handleButtonClick(2, "Meimei Himari", 'meimei himari')}
                   style={{
                     ...buttonStyle,
                     background: selectedButton === 2 ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.45)',
@@ -311,7 +311,7 @@ const Page = () => {
               <div style={{ position: 'relative' }}>
                 <Button
                   variant="contained"
-                  onClick={() => handleButtonClick(3, "NURSE-T", 47)}
+                  onClick={() => handleButtonClick(3, "NURSE-T", 'nurse-t')}
                   style={{
                     ...buttonStyle,
                     background: selectedButton === 2 ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.45)',
@@ -343,7 +343,7 @@ const Page = () => {
               <div style={{ position: 'relative' }}>
                 <Button
                   variant="contained"
-                  onClick={() => handleButtonClick(4, "SAYO", 46)}
+                  onClick={() => handleButtonClick(4, "SAYO", 'sayo')}
                   style={{
                     ...buttonStyle,
                     background: selectedButton === 4 ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.45)',
@@ -375,7 +375,7 @@ const Page = () => {
               <div style={{ position: 'relative' }}>
                 <Button
                   variant="contained"
-                  onClick={() => handleButtonClick(5, "NO.7", 29)}
+                  onClick={() => handleButtonClick(5, "NO.7", 'no 7')}
                   style={{
                     ...buttonStyle,
                     background: selectedButton === 5 ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.45)',

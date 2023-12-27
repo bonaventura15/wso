@@ -186,7 +186,7 @@ const Page = () => {
           <div style={{ marginTop: '20px' }}>
             <Typography
               component={NextLink}
-              href="/AboutUs"
+              href="/about-us"
               style={{
                 margin: '0 30px',
                 color: '#FFF',

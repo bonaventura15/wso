@@ -32,6 +32,7 @@ const Page = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [errorMessage, setErrorMessage] = useState(null);
 
+
   const formik = useFormik({
     initialValues: {
       emailORname: '',
@@ -51,8 +52,17 @@ const Page = () => {
     }),
     onSubmit: async (values, helpers) => {
       try {
-        await auth.signIn(values.emailORname, values.password);
-        router.push('/');
+        const res = await auth.signIn(values.emailORname, values.password);
+        if (res != 'eror'){
+          window.location.href = res;
+        }
+        else{
+        const customErrorMessage = 'something wrong';
+        setErrorMessage(customErrorMessage);
+        helpers.setStatus({ success: false });
+        helpers.setErrors({ submit: customErrorMessage });
+        helpers.setSubmitting(false);
+        }
       } catch (err) {
         const customErrorMessage = err.message;
         setErrorMessage(customErrorMessage);
@@ -62,7 +72,7 @@ const Page = () => {
       }
     }
   });
-
+  
   return (
     <>
       <Head>
@@ -256,7 +266,7 @@ const Page = () => {
           <div style={{ textAlign: 'center', marginTop: '5px' }}>
             <Button
               component={NextLink}
-              href="https://3c71-103-105-55-169.ngrok-free.app/google-auth/login"
+              href="http://127.0.0.1:8000/api/auth/google/autentikasi"
               style={{
                 background: 'url("/google.png"), lightgray 50% / cover no-repeat',
                 width: '80px',

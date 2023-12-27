@@ -47,8 +47,10 @@ const Page = () => {
     onSubmit: async (values, helpers) => {
       const { email, token, password, konfirmasi_password } = values;
       try {
-        await auth.signUp(email, token, password, konfirmasi_password);
-        router.push('/auth/update-user');
+        const res = await auth.signUp(email, token, password, konfirmasi_password);
+        if (res != 'eror'){
+          window.location.href = res;
+        }
       } catch (err) {
         helpers.setStatus({ success: false });
         helpers.setErrors({ submit: err.message });
@@ -278,7 +280,7 @@ const Page = () => {
           <div style={{ textAlign: 'center', marginTop: '5px' }}>
             <Button
               component={NextLink}
-              href="https://68e7-103-105-55-169.ngrok-free.app/google-auth/register"
+              href="http://localhost:8000/api/auth/google/autentikasi"
               style={{
                 background: 'url("/google.png"), lightgray 50% / cover no-repeat',
                 width: '80px',
